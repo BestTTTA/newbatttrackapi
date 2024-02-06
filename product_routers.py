@@ -19,14 +19,15 @@ async def get_product(product_id: str):
     if product:
         response = ProductResponse(
             product_id=product["product_id"],
-            start_time="start time value here",  
-            end_time="end time value here", 
-            current_stage= 0,
+            start_time=product["start_time"],  
+            end_time=product["end_time"], 
+            current_stage=product["current_stage"],
             employees=product.get("employees", [])
         )
         return response
     else:
         raise HTTPException(status_code=404, detail="Product not found")
+
 
 
 @router.get("/getall_product", response_model=List[Productforall])
