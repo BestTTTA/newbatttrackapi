@@ -62,3 +62,7 @@ class EmployeeStageUpdate(BaseModel):
     user_id: str
     current_stage: int
     
+class Info_user(BaseModel):
+    username: str
+    password: str
+    
