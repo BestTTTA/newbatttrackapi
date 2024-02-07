@@ -34,7 +34,11 @@ async def get_product(product_id: str):
 @router.get("/getall_product", response_model=List[Productforall])
 async def get_all_products():
     products = list(db.products.find({}))
-    return [Productforall(**product) for product in products]
+    validated_products = []
+    for product in products:
+        if all(field in product for field in ['product_id', 'start_time', 'end_time', 'holding_time', 'employees']):
+            validated_products.append(Productforall(**product))
+    return validated_products
 
 
 @router.put("/{product_id}/start_time", response_model=Product)
