@@ -7,6 +7,7 @@ class Employee(BaseModel):
     name: str
     start_time: str
     end_time: str
+    holding_time: str
     current_stage: int
 
 
@@ -14,6 +15,7 @@ class Product(BaseModel):
     product_id: str
     start_time: str
     end_time: str
+    holding_time: str
     current_stage: int
     
 class Productforall(BaseModel):
@@ -27,6 +29,7 @@ class ProductResponse(BaseModel):
     start_time: str
     end_time: str
     current_stage: int
+    holding_time: str
     employees: List[Employee]   
     
 class EmployeeUpdate(BaseModel):
@@ -46,6 +49,9 @@ class StartTimeUpdate(BaseModel):
     
 class EndTimeUpdate(BaseModel):
     end_time: str
+    
+class HoldingUpdate(BaseModel):
+    holding_time: str
     
 class StageUpdate(BaseModel):
     current_stage: int

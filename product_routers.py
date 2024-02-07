@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Body, HTTPException
-from models import Product, ProductUpdate, StartTimeUpdate, EndTimeUpdate, ProductResponse, Productforall, StageUpdate
+from models import Product, ProductUpdate, StartTimeUpdate, EndTimeUpdate, ProductResponse, Productforall, StageUpdate, HoldingUpdate
 from database import db
 from typing import List
 
@@ -54,6 +54,18 @@ async def update_product_end_time(product_id: str, end_time_update: EndTimeUpdat
     result = db.products.find_one_and_update(
         {"product_id": product_id},
         {"$set": {"end_time": end_time_update.end_time}},
+        return_document=True
+    )
+    if result:
+        return Product(**result)
+    else:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+@router.put("/{product_id}/holding_time", response_model=Product)
+async def update_product_holding_stage(product_id: str, holding_time_update: HoldingUpdate = Body(...)):
+    result = db.products.find_one_and_update(
+        {"product_id": product_id},
+        {"$set": {"holding_time": holding_time_update.holding_time}},
         return_document=True
     )
     if result:
