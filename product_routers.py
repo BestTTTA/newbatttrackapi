@@ -36,7 +36,7 @@ async def get_all_products():
     products = list(db.products.find({}))
     validated_products = []
     for product in products:
-        if all(field in product for field in ['product_id', 'start_time', 'end_time', 'holding_time', 'employees']):
+        if all(field in product for field in ['product_id', 'start_time', 'end_time', 'holding_time',"current_stage", 'employees']):
             validated_products.append(Productforall(**product))
     return validated_products
 

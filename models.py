@@ -23,6 +23,7 @@ class Productforall(BaseModel):
     start_time: str
     end_time: str
     holding_time: str
+    current_stage: int
     employees: List[Employee]
     
 class ProductResponse(BaseModel):
