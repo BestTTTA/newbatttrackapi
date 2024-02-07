@@ -22,6 +22,7 @@ async def get_product(product_id: str):
             start_time=product["start_time"],  
             end_time=product["end_time"], 
             current_stage=product["current_stage"],
+            holding_time= product["holding_time"],
             employees=product.get("employees", [])
         )
         return response
