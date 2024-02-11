@@ -80,15 +80,14 @@ async def update_employee_current_stage(product_id: str, update_data: EmployeeSt
     return updated_product
 
 
-
 @router.put("/add_employee/{product_id}")
 async def add_employee_to_product(product_id: str, employee: Employee = Body(...)):
     product = db.products.find_one({"product_id": product_id})
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    if any(emp['user_id'] == employee.user_id for emp in product.get("employees", [])):
-        raise HTTPException(status_code=400, detail="Employee already added")
+    # if any(emp['user_id'] == employee.user_id for emp in product.get("employees", [])):
+    #     raise HTTPException(status_code=400, detail="Employee already added")
     
     db.products.update_one({"product_id": product_id}, {"$push": {"employees": employee.dict()}})
     return {"message": "Employee added successfully to product"}

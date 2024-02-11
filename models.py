@@ -34,6 +34,11 @@ class ProductResponse(BaseModel):
     holding_time: str
     employees: List[Employee]   
     
+    
+class Productstage(BaseModel):
+    current_stage: int 
+
+    
 class EmployeeUpdate(BaseModel):
     user_id: Optional[str] = None
     name: Optional[str] = None

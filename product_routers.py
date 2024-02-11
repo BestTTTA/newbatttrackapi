@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Body, HTTPException
-from models import Product, ProductUpdate, StartTimeUpdate, EndTimeUpdate, ProductResponse, Productforall, StageUpdate, HoldingUpdate
+from models import Product, ProductUpdate, StartTimeUpdate, EndTimeUpdate, ProductResponse, Productforall, StageUpdate, HoldingUpdate,  Productstage
 from database import db
 from typing import List
 
@@ -11,7 +11,6 @@ async def create_product(product: Product):
         raise HTTPException(status_code=400, detail="Product already exists")
     db.products.insert_one(product.dict())
     return product
-
 
 @router.get("/get_product_id/{product_id}", response_model=ProductResponse)
 async def get_product(product_id: str):
@@ -28,8 +27,18 @@ async def get_product(product_id: str):
         return response
     else:
         raise HTTPException(status_code=404, detail="Product not found")
-
-
+    
+    
+@router.get("/get_product_stage/{product_id}", response_model=Productstage)
+async def get_product(product_id: str):
+    product = db.products.find_one({"product_id": product_id})
+    if product:
+        response = Productstage(
+            current_stage=product["current_stage"],
+        )
+        return response
+    else:
+        raise HTTPException(status_code=404, detail="Product not found")
 
 @router.get("/getall_product", response_model=List[Productforall])
 async def get_all_products():
@@ -39,7 +48,6 @@ async def get_all_products():
         if all(field in product for field in ['product_id', 'start_time', 'end_time', 'holding_time',"current_stage", 'employees']):
             validated_products.append(Productforall(**product))
     return validated_products
-
 
 @router.put("/{product_id}/start_time", response_model=Product)
 async def update_product_start_time(product_id: str, start_time_update: StartTimeUpdate = Body(...)):
