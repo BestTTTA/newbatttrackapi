@@ -47,14 +47,19 @@ async def update_employee_start_time(product_id: str, employee_start_time_update
 @router.put("/{product_id}/employee_end_time", response_model=Product)
 async def update_employee_end_time(product_id: str, update_data: EmployeeEndTimeUpdate = Body(...)):
     
-    product = db.products.find_one({"product_id": product_id, "employees.user_id": update_data.user_id})
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found or employee not in product")
+    product = db.products.find_one({"product_id": product_id})
+    if not product or 'employees' not in product or len(product['employees']) == 0:
+        raise HTTPException(status_code=404, detail="Product not found or no employees in product")
 
+    # Calculate the index of the most recent (last) employee
+    most_recent_employee_index = len(product['employees']) - 1
+
+    # MongoDB update operation using the calculated index
     result = db.products.update_one(
-        {"product_id": product_id, "employees.user_id": update_data.user_id},
-        {"$set": {"employees.$.end_time": update_data.end_time}}
+        {"product_id": product_id},
+        {"$set": {f"employees.{most_recent_employee_index}.end_time": update_data.end_time}}
     )
+    
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Employee end_time update failed")
 
