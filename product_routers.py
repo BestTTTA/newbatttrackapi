@@ -26,7 +26,7 @@ async def add_info_to_product(product_id: str, info_stage: Info_stage = Body(...
 
 @router.get("/get_product_id/{product_id}", response_model=ProductResponse)
 async def get_product(product_id: str):
-    product = db.products.find_one({"product_id": product_id})
+    product = await db.products.find_one({"product_id": product_id})
     if product:
         response = ProductResponse(
             product_id=product["product_id"],
@@ -34,7 +34,7 @@ async def get_product(product_id: str):
             end_time=product["end_time"], 
             current_stage=product["current_stage"],
             holding_time= product["holding_time"],
-            employees=product.get("employees", [])
+            info_stage=product["info_stage"]
         )
         return response
     else:
@@ -43,7 +43,7 @@ async def get_product(product_id: str):
     
 @router.get("/get_product_stage/{product_id}", response_model=Productstage)
 async def get_product(product_id: str):
-    product = db.products.find_one({"product_id": product_id})
+    product = await db.products.find_one({"product_id": product_id})
     if product:
         response = Productstage(
             current_stage=product["current_stage"],
@@ -52,18 +52,22 @@ async def get_product(product_id: str):
     else:
         raise HTTPException(status_code=404, detail="Product not found")
 
+
 @router.get("/getall_product", response_model=List[Productforall])
 async def get_all_products():
-    products = list(db.products.find({}))
+    products_cursor = db.products.find({})
+    products = await products_cursor.to_list(length=None) 
     validated_products = []
     for product in products:
-        if all(field in product for field in ['product_id', 'start_time', 'end_time', 'holding_time',"current_stage", 'employees']):
+        if all(field in product for field in ['product_id', 'start_time', 'end_time', 'holding_time', "current_stage", 'info_stage']):
             validated_products.append(Productforall(**product))
     return validated_products
 
+
+
 @router.put("/{product_id}/start_time", response_model=Product)
 async def update_product_start_time(product_id: str, start_time_update: StartTimeUpdate = Body(...)):
-    result = db.products.find_one_and_update(
+    result = await db.products.find_one_and_update(
         {"product_id": product_id},
         {"$set": {"start_time": start_time_update.start_time}},
         return_document=True
@@ -76,7 +80,7 @@ async def update_product_start_time(product_id: str, start_time_update: StartTim
 
 @router.put("/{product_id}/end_time", response_model=Product)
 async def update_product_end_time(product_id: str, end_time_update: EndTimeUpdate = Body(...)):
-    result = db.products.find_one_and_update(
+    result = await db.products.find_one_and_update(
         {"product_id": product_id},
         {"$set": {"end_time": end_time_update.end_time}},
         return_document=True
@@ -88,7 +92,7 @@ async def update_product_end_time(product_id: str, end_time_update: EndTimeUpdat
     
 @router.put("/{product_id}/holding_time", response_model=Product)
 async def update_product_holding_stage(product_id: str, holding_time_update: HoldingUpdate = Body(...)):
-    result = db.products.find_one_and_update(
+    result = await db.products.find_one_and_update(
         {"product_id": product_id},
         {"$set": {"holding_time": holding_time_update.holding_time}},
         return_document=True
@@ -101,7 +105,7 @@ async def update_product_holding_stage(product_id: str, holding_time_update: Hol
 
 @router.put("/{product_id}/current_stage", response_model=Product)
 async def update_product_current_stage(product_id: str, current_stage_update: StageUpdate = Body(...)):
-    result = db.products.find_one_and_update(
+    result = await db.products.find_one_and_update(
         {"product_id": product_id},
         {"$set": {"current_stage": current_stage_update.current_stage}},
         return_document=True

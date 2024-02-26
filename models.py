@@ -17,24 +17,7 @@ class Product(BaseModel):
     end_time: str
     holding_time: str
     current_stage: int
-    
-class Productforall(BaseModel):
-    product_id: str
-    start_time: str
-    end_time: str
-    holding_time: str
-    current_stage: int
-    employees: List[Employee]
-    
-class ProductResponse(BaseModel):
-    product_id: str
-    start_time: str
-    end_time: str
-    current_stage: int
-    holding_time: str
-    employees: List[Employee]   
-    
-    
+        
 class Productstage(BaseModel):
     current_stage: int 
 
@@ -64,15 +47,15 @@ class StageUpdate(BaseModel):
     current_stage: int
     
 class EmployeeStartTimeUpdate(BaseModel):
-    user_id: str
+    name: str
     start_time: str
     
 class EmployeeEndTimeUpdate(BaseModel):
-    user_id: str
+    name: str
     end_time: str
     
 class EmployeeStageUpdate(BaseModel):
-    user_id: str
+    name: str
     current_stage: int
     
 class Info_user(BaseModel):
@@ -83,3 +66,24 @@ class Info_user(BaseModel):
 class Info_stage(BaseModel):
     name_stage: str
     content_stage: str
+    
+class Info_stage_and_emp(BaseModel):
+    name_stage: str
+    content_stage: str
+    employees: List[Employee]
+
+class ProductResponse(BaseModel):
+    product_id: str
+    start_time: str
+    end_time: str
+    current_stage: int
+    holding_time: str
+    info_stage: List[Info_stage_and_emp]
+    
+class Productforall(BaseModel):
+    product_id: str
+    start_time: str
+    end_time: str
+    current_stage: int
+    holding_time: str
+    info_stage: List[Info_stage_and_emp]
