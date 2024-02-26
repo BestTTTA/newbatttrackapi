@@ -10,7 +10,7 @@ WORKDIR /app
 
 # Install Python dependencies
 RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
+    pip install fastapi uvicorn openai pymongo python-dotenv mortor
 
 # Copy the application files to the container
 COPY . .
