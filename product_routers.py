@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Body, HTTPException
-from models import Product, ProductUpdate, StartTimeUpdate, EndTimeUpdate, ProductResponse, Productforall, StageUpdate, HoldingUpdate,  Productstage
+from models import Product, ProductUpdate, StartTimeUpdate, EndTimeUpdate, ProductResponse, Productforall, StageUpdate, HoldingUpdate,  Productstage, Info_stage
 from database import db
 from typing import List
 
@@ -11,6 +11,18 @@ async def create_product(product: Product):
         raise HTTPException(status_code=400, detail="Product already exists")
     db.products.insert_one(product.dict())
     return product
+
+
+@router.put("/add_info_stage/{product_id}")
+async def add_info_to_product(product_id: str, info_stage: Info_stage = Body(...)):
+    product = db.products.find_one({"product_id": product_id})
+    
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    db.products.update_one({"product_id": product_id}, {"$push": {"info_stage": info_stage.dict()}})
+    return {"message": "Employee added successfully to product"}
+
 
 @router.get("/get_product_id/{product_id}", response_model=ProductResponse)
 async def get_product(product_id: str):

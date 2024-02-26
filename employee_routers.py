@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Body, HTTPException
-from models import Employee, Product, EmployeeStartTimeUpdate, EmployeeEndTimeUpdate, EmployeeStageUpdate, Info_user
+from models import Employee, Product, EmployeeStartTimeUpdate, EmployeeEndTimeUpdate, EmployeeStageUpdate, Info_user, Info_stage
 from database import db, collection
 from typing import List
 import hashlib
@@ -92,12 +92,13 @@ async def add_employee_to_product(product_id: str, employee: Employee = Body(...
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    # Check if an employee with the same name and current_stage is already added to the product
     if any(emp['name'] == employee.name and emp['current_stage'] == employee.current_stage for emp in product.get("employees", [])):
         raise HTTPException(status_code=400, detail="Employee with the same name and current stage already added")
 
     db.products.update_one({"product_id": product_id}, {"$push": {"employees": employee.dict()}})
     return {"message": "Employee added successfully to product"}
+
+
 
 
 def hash_password(password: str) -> str:
@@ -132,3 +133,23 @@ async def login(user: Info_user):
         return {"user_id": user_id, "username": username}
     else:
         raise HTTPException(status_code=401, detail="Invalid username or password")
+    
+
+@router.put("/add_emp_info_stage/{product_id}/{name_info_stage}")
+async def add_employee_to_info_stage(product_id: str, name_info_stage: str, update_data: Employee = Body(...)):
+    
+    # Find the product to ensure it exists
+    product = db.products.find_one({"product_id": product_id})
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    # Update the product by pushing the new employee data into the specified info_stage
+    result = db.products.update_one(
+        {"product_id": product_id, "info_stage.name_stage": name_info_stage},
+        {"$push": {"info_stage.$.employees": update_data.dict()}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=400, detail="Failed to add employee to info stage")
+
+    return {"message": "Success"}

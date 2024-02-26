@@ -79,3 +79,7 @@ class Info_user(BaseModel):
     username: str
     password: str
     
+
+class Info_stage(BaseModel):
+    name_stage: str
+    content_stage: str
