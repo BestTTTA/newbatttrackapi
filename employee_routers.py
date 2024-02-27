@@ -89,27 +89,29 @@ def hash_password(password: str) -> str:
     """Hash a password for storing."""
     return hashlib.sha256(password.encode()).hexdigest()
 
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a stored password against one provided by user"""
+    return hashlib.sha256(plain_password.encode()).hexdigest() == hashed_password
+
+
 @router.post("/register/")
 async def register_users(user_create: Info_user):
-    existing_user = collection.find_one({"username": user_create.username})
+    existing_user = await collection.find_one({"username": user_create.username})
     if existing_user:
         raise HTTPException(status_code=400, detail=f"Username {user_create.username} already exists")
 
     hashed_password = hash_password(user_create.password)
 
     user_data = {"username": user_create.username, "password": hashed_password}
-    result = collection.insert_one(user_data)
+    result = await collection.insert_one(user_data)  
 
     return {"message": "Registered", "user_id": str(result.inserted_id)}
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a stored password against one provided by user"""
-    return hashlib.sha256(plain_password.encode()).hexdigest() == hashed_password
-
 @router.post("/login/")
 async def login(user: Info_user):
-    user_data = collection.find_one({"username": user.username})
+    user_data = await collection.find_one({"username": user.username})
 
     if user_data and verify_password(user.password, user_data["password"]):
         user_id = str(user_data.get("_id"))
@@ -117,6 +119,7 @@ async def login(user: Info_user):
         return {"user_id": user_id, "username": username}
     else:
         raise HTTPException(status_code=401, detail="Invalid username or password")
+
     
 
 @router.put("/add_emp_info_stage/{product_id}/{name_info_stage}")
