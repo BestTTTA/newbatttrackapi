@@ -2,6 +2,8 @@ from fastapi import APIRouter, Body, HTTPException
 from models import Product, ProductUpdate, StartTimeUpdate, EndTimeUpdate, ProductResponse, Productforall, StageUpdate, HoldingUpdate,  Productstage, Info_stage
 from database import db
 from typing import List
+from bson import ObjectId  # Assuming MongoDB ObjectId usage
+import json
 
 router = APIRouter()
 
@@ -28,11 +30,13 @@ async def add_info_to_product(product_id: str, info_stage: Info_stage = Body(...
 async def get_product(product_id: str):
     product = db.products.find_one({"product_id": product_id})
     if product:
-        response = ProductResponse(**product)
-        return response
+        if isinstance(product.get('_id'), ObjectId):
+            product['_id'] = str(product['_id'])
+        if 'info_stage' not in product or not product['info_stage']:
+            product['info_stage'] = [] 
+        return product
     else:
         raise HTTPException(status_code=404, detail="Product not found")
-
         
     
 @router.get("/get_product_stage/{product_id}", response_model=Productstage)
