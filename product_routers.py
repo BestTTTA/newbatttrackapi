@@ -26,24 +26,18 @@ async def add_info_to_product(product_id: str, info_stage: Info_stage = Body(...
 
 @router.get("/get_product_id/{product_id}", response_model=ProductResponse)
 async def get_product(product_id: str):
-    product = await db.products.find_one({"product_id": product_id})
+    product = db.products.find_one({"product_id": product_id})
     if product:
-        response = ProductResponse(
-            product_id=product["product_id"],
-            start_time=product["start_time"],  
-            end_time=product["end_time"], 
-            current_stage=product["current_stage"],
-            holding_time= product["holding_time"],
-            info_stage=product["info_stage"]
-        )
+        response = ProductResponse(**product)
         return response
     else:
         raise HTTPException(status_code=404, detail="Product not found")
-    
+
+        
     
 @router.get("/get_product_stage/{product_id}", response_model=Productstage)
 async def get_product(product_id: str):
-    product = await db.products.find_one({"product_id": product_id})
+    product = db.products.find_one({"product_id": product_id})
     if product:
         response = Productstage(
             current_stage=product["current_stage"],
@@ -51,23 +45,23 @@ async def get_product(product_id: str):
         return response
     else:
         raise HTTPException(status_code=404, detail="Product not found")
+    
+    
 
-
-@router.get("/getall_product", response_model=List[Productforall])
+@router.get("/getall_product", response_model=List[ProductResponse])
 async def get_all_products():
-    products_cursor = db.products.find({})
-    products = await products_cursor.to_list(length=None) 
+    products = list(db.products.find({}))
     validated_products = []
     for product in products:
-        if all(field in product for field in ['product_id', 'start_time', 'end_time', 'holding_time', "current_stage", 'info_stage']):
-            validated_products.append(Productforall(**product))
+        if all(field in product for field in ['product_id', 'start_time', 'end_time', 'holding_time',"current_stage", 'info_stage']):
+            validated_products.append(ProductResponse(**product))
     return validated_products
 
 
 
 @router.put("/{product_id}/start_time", response_model=Product)
 async def update_product_start_time(product_id: str, start_time_update: StartTimeUpdate = Body(...)):
-    result = await db.products.find_one_and_update(
+    result = db.products.find_one_and_update(
         {"product_id": product_id},
         {"$set": {"start_time": start_time_update.start_time}},
         return_document=True
@@ -77,10 +71,11 @@ async def update_product_start_time(product_id: str, start_time_update: StartTim
     else:
         raise HTTPException(status_code=404, detail="Product not found")
     
+    
 
 @router.put("/{product_id}/end_time", response_model=Product)
 async def update_product_end_time(product_id: str, end_time_update: EndTimeUpdate = Body(...)):
-    result = await db.products.find_one_and_update(
+    result = db.products.find_one_and_update(
         {"product_id": product_id},
         {"$set": {"end_time": end_time_update.end_time}},
         return_document=True
@@ -92,7 +87,7 @@ async def update_product_end_time(product_id: str, end_time_update: EndTimeUpdat
     
 @router.put("/{product_id}/holding_time", response_model=Product)
 async def update_product_holding_stage(product_id: str, holding_time_update: HoldingUpdate = Body(...)):
-    result = await db.products.find_one_and_update(
+    result = db.products.find_one_and_update(
         {"product_id": product_id},
         {"$set": {"holding_time": holding_time_update.holding_time}},
         return_document=True
@@ -105,7 +100,7 @@ async def update_product_holding_stage(product_id: str, holding_time_update: Hol
 
 @router.put("/{product_id}/current_stage", response_model=Product)
 async def update_product_current_stage(product_id: str, current_stage_update: StageUpdate = Body(...)):
-    result = await db.products.find_one_and_update(
+    result = db.products.find_one_and_update(
         {"product_id": product_id},
         {"$set": {"current_stage": current_stage_update.current_stage}},
         return_document=True

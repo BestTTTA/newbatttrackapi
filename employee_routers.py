@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Body, HTTPException
-from models import Employee, Product, EmployeeStartTimeUpdate, EmployeeEndTimeUpdate, EmployeeStageUpdate, Info_user, Info_stage, ProductResponse
+from models import Employee, Product, EmployeeStartTimeUpdate, EmployeeEndTimeUpdate, EmployeeStageUpdate, Info_user, Info_stage
 from database import db, collection
 from typing import List
 import hashlib
@@ -7,65 +7,90 @@ import hashlib
 router = APIRouter()
 
 
-@router.get("/employee/{name}", response_model=List[ProductResponse])
-async def get_products_by_employee(name: str):
-    cursor = db.products.find({"info_stage.employees.name": name})
-    products = await cursor.to_list(length=100)
-    if not products:
-        raise HTTPException(status_code=404, detail=f"No products found for employee {name}")
-    return products
+
+@router.get("/employee/{user_id}", response_model=List[Product])
+async def get_products_by_employee(user_id: str):
+    products = db.products.find({"info_stage.employees.user_id": user_id})
+    print("employee_byID:", products)
+    product_list = []
+    for product in products:
+        current_stage = product.get('current_stage', None)
+        if current_stage is not None:
+            product_list.append(Product(**product))
+        else:
+            product_list.append(Product(
+                product_id=product['product_id'],
+                start_time=product['start_time'],
+                end_time=product['end_time'],
+                employees=product['employees']
+            ))
+    return product_list
+
 
 
 @router.put("/{product_id}/employee_start_time")
 async def update_employee_start_time(product_id: str, employee_start_time_update: EmployeeStartTimeUpdate = Body(...)):
-    product = await db.products.find_one({"product_id": product_id})
+    product = db.products.find_one({"product_id": product_id})
+    print(product)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-
     updated = False
-    for index, employee in enumerate(product.get("info_stage", [])[0].get("employees", [])): 
-        if employee["name"] == employee_start_time_update.name:
-            await db.products.update_one(
-                {"product_id": product_id, f"info_stage.0.employees.{index}.name": employee_start_time_update.name},
-                {"$set": {f"info_stage.0.employees.{index}.start_time": employee_start_time_update.start_time}}
-            )
-            updated = True
-            break
-
-    if not updated:
-        raise HTTPException(status_code=404, detail="Employee not found in product")
-
-    return {"message": "Employee start time updated successfully"}
-
-
-@router.put("/{product_id}/employee_current_stage", response_model=Product)
-async def update_employee_current_stage(product_id: str, update_data: EmployeeStageUpdate = Body(...)):
-    product = await db.products.find_one({"product_id": product_id})
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-
-    updated = False
-    for index, stage in enumerate(product.get("info_stage", [])):
-        for employee_index, employee in enumerate(stage.get("employees", [])):
-            if employee["name"] == update_data.name:
-                await db.products.update_one(
-                    {"product_id": product_id, f"info_stage.{index}.employees.{employee_index}.name": update_data.name},
-                    {"$set": {f"info_stage.{index}.employees.{employee_index}.current_stage": update_data.current_stage}}
-                )
+    for stage in product.get("info_stage", []):
+        for employee in stage.get("employees", []):
+            if employee["user_id"] == employee_start_time_update.user_id:
+                employee["start_time"] = employee_start_time_update.start_time
                 updated = True
                 break
         if updated:
-            break
-
+                 break
     if not updated:
         raise HTTPException(status_code=404, detail="Employee not found in product")
+    db.products.update_one({"product_id": product_id}, {"$set": {"info_stage": product["info_stage"]}})    
+    return {"message": "Employee start time updated successfully"}
 
-    # Fetch and return the updated product
-    updated_product = await db.products.find_one({"product_id": product_id})
-    if not updated_product:
-        raise HTTPException(status_code=404, detail="Failed to fetch updated product after update")
 
-    return updated_product  # Ensure this object matches the Product model structure
+
+@router.put("/{product_id}/employee_end_time")
+async def update_employee_end_time(product_id: str, employee_end_time_update: EmployeeEndTimeUpdate = Body(...)):
+    product = db.products.find_one({"product_id": product_id})
+    print(product)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    updated = False
+    for stage in product.get("info_stage", []):
+        for employee in stage.get("employees", []):
+            if employee["user_id"] == employee_end_time_update.user_id:
+                employee["end_time"] = employee_end_time_update.end_time
+                updated = True
+                break
+        if updated:
+                 break
+    if not updated:
+        raise HTTPException(status_code=404, detail="Employee not found in product")
+    db.products.update_one({"product_id": product_id}, {"$set": {"info_stage": product["info_stage"]}})    
+    return {"message": "Employee end time updated successfully"}
+
+
+
+@router.put("/{product_id}/employee_current_stage")
+async def update_employee_current_stage(product_id: str, employee_current_stage_update: EmployeeStageUpdate = Body(...)):
+    product = db.products.find_one({"product_id": product_id})
+    print(product)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    updated = False
+    for stage in product.get("info_stage", []):
+        for employee in stage.get("employees", []):
+            if employee["user_id"] == employee_current_stage_update.user_id:
+                employee["current_stage"] = employee_current_stage_update.current_stage
+                updated = True
+                break
+        if updated:
+                 break
+    if not updated:
+        raise HTTPException(status_code=404, detail="Employee not found in product")
+    db.products.update_one({"product_id": product_id}, {"$set": {"info_stage": product["info_stage"]}})    
+    return {"message": "Employee current stage updated successfully"}
 
 
 
@@ -89,29 +114,27 @@ def hash_password(password: str) -> str:
     """Hash a password for storing."""
     return hashlib.sha256(password.encode()).hexdigest()
 
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a stored password against one provided by user"""
-    return hashlib.sha256(plain_password.encode()).hexdigest() == hashed_password
-
-
 @router.post("/register/")
 async def register_users(user_create: Info_user):
-    existing_user = await collection.find_one({"username": user_create.username})
+    existing_user = collection.find_one({"username": user_create.username})
     if existing_user:
         raise HTTPException(status_code=400, detail=f"Username {user_create.username} already exists")
 
     hashed_password = hash_password(user_create.password)
 
     user_data = {"username": user_create.username, "password": hashed_password}
-    result = await collection.insert_one(user_data)  
+    result = collection.insert_one(user_data)
 
     return {"message": "Registered", "user_id": str(result.inserted_id)}
 
 
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a stored password against one provided by user"""
+    return hashlib.sha256(plain_password.encode()).hexdigest() == hashed_password
+
 @router.post("/login/")
 async def login(user: Info_user):
-    user_data = await collection.find_one({"username": user.username})
+    user_data = collection.find_one({"username": user.username})
 
     if user_data and verify_password(user.password, user_data["password"]):
         user_id = str(user_data.get("_id"))
@@ -119,16 +142,18 @@ async def login(user: Info_user):
         return {"user_id": user_id, "username": username}
     else:
         raise HTTPException(status_code=401, detail="Invalid username or password")
-
     
 
 @router.put("/add_emp_info_stage/{product_id}/{name_info_stage}")
 async def add_employee_to_info_stage(product_id: str, name_info_stage: str, update_data: Employee = Body(...)):
-    product = await db.products.find_one({"product_id": product_id})
+    
+    # Find the product to ensure it exists
+    product = db.products.find_one({"product_id": product_id})
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    result = await db.products.update_one(
+    # Update the product by pushing the new employee data into the specified info_stage
+    result = db.products.update_one(
         {"product_id": product_id, "info_stage.name_stage": name_info_stage},
         {"$push": {"info_stage.$.employees": update_data.dict()}}
     )
