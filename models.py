@@ -90,3 +90,21 @@ class ProductResponse(BaseModel):
     current_stage: int
     holding_time: str
     info_stage: List[Info_stage_for_response]  
+    
+
+class SubStep(BaseModel):
+    name: str
+    description: str
+    duration: int  
+
+
+class Step(BaseModel):
+    name: str
+    description: str
+    sub_steps: List[SubStep]  
+
+
+class Template(BaseModel):
+    name: str
+    description: str
+    steps: List[Step]  
