@@ -53,7 +53,7 @@ async def update_step(step_id: str, update_request: UpdateStepsModel, name: str)
     return updated_step
 
 
-@router.put("/update_start/{step_id}", response_model=Dict)
+@router.put("/update_start/{step_id}/{start_time}", response_model=Dict)
 async def update_step(step_id: str, update_request: UpdateStepsModel, start_time: str):
     updated_fields = {}
     for step in update_request.steps_to_update:
