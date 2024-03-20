@@ -38,11 +38,11 @@ def convert_id(document):
     return document
 
 
-@router.put("/udpate_name/{step_id}", response_model=Dict)
-async def update_step(step_id: str, update_request: UpdateStepsModel, name: str):
+@router.put("/udpate_name/{sub_steps}/{step_id}/{name}", response_model=Dict)
+async def update_step(step_id: str, update_request: UpdateStepsModel, name: str, sub_steps: str):
     updated_fields = {}
     for step in update_request.steps_to_update:
-        updated_fields[f"sub_steps1.{step}.name"] = name
+        updated_fields[f"{sub_steps}.{step}.name"] = name
     updated_step = collection.find_one_and_update(
         {"id_step": step_id},
         {"$set": updated_fields},
@@ -53,11 +53,11 @@ async def update_step(step_id: str, update_request: UpdateStepsModel, name: str)
     return updated_step
 
 
-@router.put("/update_start/{step_id}/{start_time}", response_model=Dict)
-async def update_step(step_id: str, update_request: UpdateStepsModel, start_time: str):
+@router.put("/update_start/{sub_steps}/{step_id}/{start_time}", response_model=Dict)
+async def update_step(step_id: str, update_request: UpdateStepsModel, start_time: str, sub_steps: str):
     updated_fields = {}
     for step in update_request.steps_to_update:
-        updated_fields[f"sub_steps1.{step}.time_start"] = start_time
+        updated_fields[f"{sub_steps}.{step}.time_start"] = start_time
     updated_step = collection.find_one_and_update(
         {"id_step": step_id},
         {"$set": updated_fields},
@@ -68,11 +68,11 @@ async def update_step(step_id: str, update_request: UpdateStepsModel, start_time
     return updated_step
 
 
-@router.put("/update_end/{step_id}/{end_time}", response_model=Dict)
-async def update_step(step_id: str, update_request: UpdateStepsModel, end_time: str):
+@router.put("/update_end/{sub_steps}/{step_id}/{end_time}", response_model=Dict)
+async def update_step(step_id: str, update_request: UpdateStepsModel, end_time: str, sub_steps: str):
     updated_fields = {}
     for step in update_request.steps_to_update:
-        updated_fields[f"sub_steps1.{step}.time_end"] = end_time
+        updated_fields[f"{sub_steps}.{step}.time_end"] = end_time
     updated_step = collection.find_one_and_update(
         {"id_step": step_id},
         {"$set": updated_fields},
